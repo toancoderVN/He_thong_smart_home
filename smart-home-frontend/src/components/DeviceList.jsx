@@ -6,6 +6,7 @@ const DeviceList = ({ roomID }) => {
 
     useEffect(() => {
         const token = localStorage.getItem("authToken");
+        console.log("token",token)
         if (!token) {
           alert("Bạn cần đăng nhập!");
           return;
