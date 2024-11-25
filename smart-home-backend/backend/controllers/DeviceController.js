@@ -1,27 +1,21 @@
-const db = require("../config/database");
-const axios = require("axios"); // Import thư viện axios
+const deviceService = require("../services/DeviceService");
+const axios = require("axios");
 
 // Điều khiển thiết bị
-exports.controlDevice = (req, res) => {
-    console.log("Yêu cầu điều khiển:", req.body); // Log yêu cầu frontend gửi đến
-    const { deviceID, action } = req.body;
+exports.controlDevice = async (req, res) => {
+    try {
+        const { deviceID, action } = req.body;
 
-    if (!deviceID || !["on", "off"].includes(action)) {
-        return res.status(400).json({ error: "Tham số không hợp lệ. Vui lòng kiểm tra 'deviceID' hoặc 'action'." });
-    }
-
-    const checkDeviceQuery = "SELECT * FROM devices WHERE id = ?";
-    db.query(checkDeviceQuery, [deviceID], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi kiểm tra thiết bị:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi kiểm tra thiết bị." });
+        if (!deviceID || !["on", "off"].includes(action)) {
+            return res.status(400).json({ error: "Tham số không hợp lệ. Vui lòng kiểm tra 'deviceID' hoặc 'action'." });
         }
 
-        if (results.length === 0) {
+        const devices = await deviceService.checkDeviceExists(deviceID);
+        if (devices.length === 0) {
             return res.status(404).json({ error: "Thiết bị không tồn tại." });
         }
 
-        const device = results[0];
+        const device = devices[0];
         const esp32IP = device.esp32IP;
 
         if (!esp32IP) {
@@ -29,223 +23,155 @@ exports.controlDevice = (req, res) => {
         }
 
         const esp32Url = `http://${esp32IP}/control?deviceID=${deviceID}&action=${action}`;
-        console.log(`Gửi yêu cầu tới ESP32: ${esp32Url}`); // Log URL gửi đến ESP32
+        const response = await axios.get(esp32Url, { timeout: 5000 });
 
-        // Gửi yêu cầu tới ESP32
-        axios
-            .get(esp32Url, { timeout: 5000 }) // Thêm timeout để tránh treo request
-            .then((response) => {
-                console.log("Phản hồi từ ESP32:", response.data); // Log phản hồi từ ESP32
-                const status = action === "on" ? 1 : 0;
-                const updateQuery = "UPDATE devices SET status = ? WHERE id = ?";
-                db.query(updateQuery, [status, deviceID], (err) => {
-                    if (err) {
-                        console.error("Lỗi khi cập nhật trạng thái thiết bị:", err);
-                        return res.status(500).json({ error: "Lỗi khi cập nhật trạng thái thiết bị." });
-                    }
+        const status = action === "on" ? 1 : 0;
+        await deviceService.updateDeviceStatus(deviceID, status);
+        await deviceService.logDeviceAction(deviceID, action);
 
-                    const logQuery = "INSERT INTO Data (deviceID, action) VALUES (?, ?)";
-                    db.query(logQuery, [deviceID, action], (err) => {
-                        if (err) {
-                            console.error("Lỗi khi lưu lịch sử thiết bị:", err);
-                            return res.status(500).json({ error: "Lỗi khi lưu lịch sử thiết bị." });
-                        }
-
-                        res.json({
-                            message: "Thiết bị đã được điều khiển thành công.",
-                            esp32Response: response.data, // Phản hồi từ ESP32
-                        });
-                    });
-                });
-            })
-            .catch((error) => {
-                console.error("Lỗi khi gửi yêu cầu tới ESP32:", error.message);
-                res.status(500).json({
-                    error: "Không thể kết nối với ESP32. Vui lòng kiểm tra kết nối mạng hoặc địa chỉ ESP32.",
-                });
-            });
-    });
+        res.json({
+            message: "Thiết bị đã được điều khiển thành công.",
+            esp32Response: response.data,
+        });
+    } catch (error) {
+        console.error("Lỗi khi điều khiển thiết bị:", error.message);
+        res.status(500).json({ error: "Không thể kết nối với ESP32 hoặc lỗi hệ thống." });
+    }
 };
 
 // Thêm thiết bị mới vào phòng
-exports.addDevice = (req, res) => {
-    const { name, status, roomID, esp32IP } = req.body;
+exports.addDevice = async (req, res) => {
+    try {
+        const { name, status, roomID, esp32IP } = req.body;
 
-    if (!name || roomID === undefined || !esp32IP) {
-        return res.status(400).json({ error: "Thiếu thông tin thiết bị." });
-    }
-
-    const query = "INSERT INTO devices (name, status, roomID, esp32IP) VALUES (?, ?, ?, ?)";
-    db.query(query, [name, status || 0, roomID, esp32IP], (err, result) => {
-        if (err) {
-            console.error("Lỗi khi thêm thiết bị:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi thêm thiết bị." });
+        if (!name || roomID === undefined || !esp32IP) {
+            return res.status(400).json({ error: "Thiếu thông tin thiết bị." });
         }
 
-        // Sau khi thêm thiết bị, cập nhật số lượng thiết bị trong bảng rooms
-        const updateRoomQuery = "UPDATE rooms SET numberDevices = numberDevices + 1 WHERE id = ?";
-        db.query(updateRoomQuery, [roomID], (updateErr) => {
-            if (updateErr) {
-                console.error("Lỗi khi cập nhật số lượng thiết bị trong phòng:", updateErr);
-                return res.status(500).json({ error: "Lỗi hệ thống khi cập nhật số lượng thiết bị trong phòng." });
-            }
+        const deviceID = await deviceService.addDevice(name, status, roomID, esp32IP);
+        await deviceService.updateRoomDeviceCount(roomID, 1);
 
-            res.json({
-                message: "Thiết bị đã được thêm thành công!",
-                deviceID: result.insertId,
-            });
+        res.json({
+            message: "Thiết bị đã được thêm thành công!",
+            deviceID: deviceID,
         });
-    });
+    } catch (error) {
+        console.error("Lỗi khi thêm thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi thêm thiết bị." });
+    }
 };
 
 
 
 // Lấy lịch sử điều khiển thiết bị
-exports.getDeviceLogs = (req, res) => {
-    const deviceID = req.params.deviceID;
-
-    const query = "SELECT * FROM Data WHERE deviceID = ? ORDER BY timestamp DESC";
-    db.query(query, [deviceID], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy lịch sử thiết bị:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy lịch sử thiết bị." });
-        }
-
-        res.json(results);
-    });
+exports.getDeviceLogs = async (req, res) => {
+    try {
+        const deviceID = req.params.deviceID;
+        const logs = await deviceService.getDeviceLogs(deviceID);
+        res.json(logs);
+    } catch (error) {
+        console.error("Lỗi khi lấy lịch sử thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy lịch sử thiết bị." });
+    }
 };
 
 // Lấy trạng thái thiết bị
-exports.getDeviceStatus = (req, res) => {
-    const deviceID = req.params.deviceID;
+exports.getDeviceStatus = async (req, res) => {
+    try {
+        const deviceID = req.params.deviceID;
+        const devices = await deviceService.getDeviceStatus(deviceID);
 
-    const query = "SELECT * FROM devices WHERE id = ?";
-    db.query(query, [deviceID], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy trạng thái thiết bị:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy trạng thái thiết bị." });
-        }
-
-        if (results.length === 0) {
+        if (devices.length === 0) {
             return res.status(404).json({ error: "Thiết bị không tồn tại." });
         }
 
+        const device = devices[0];
         res.json({
-            deviceID: results[0].id,
-            name: results[0].name,
-            status: results[0].status === 1 ? "on" : "off",
+            deviceID: device.id,
+            name: device.name,
+            status: device.status === 1 ? "on" : "off",
         });
-    });
+    } catch (error) {
+        console.error("Lỗi khi lấy trạng thái thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy trạng thái thiết bị." });
+    }
 };
 
+
 // Nhận và lưu dữ liệu cảm biến từ ESP32
-exports.saveSensorData = (req, res) => {
-    const { temperature, humidity } = req.body;
+exports.saveSensorData = async (req, res) => {
+    try {
+        const { temperature, humidity } = req.body;
 
-    if (temperature === undefined || humidity === undefined) {
-        return res.status(400).json({ error: "Thiếu dữ liệu nhiệt độ hoặc độ ẩm." });
-    }
-
-    const query = "INSERT INTO sensor_data (temperature, humidity) VALUES (?, ?)";
-    db.query(query, [temperature, humidity], (err) => {
-        if (err) {
-            console.error("Lỗi khi lưu dữ liệu cảm biến:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống." });
+        if (temperature === undefined || humidity === undefined) {
+            return res.status(400).json({ error: "Thiếu dữ liệu nhiệt độ hoặc độ ẩm." });
         }
 
+        await deviceService.saveSensorData(temperature, humidity);
         res.json({ message: "Dữ liệu cảm biến đã được lưu thành công." });
-    });
+    } catch (error) {
+        console.error("Lỗi khi lưu dữ liệu cảm biến:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lưu dữ liệu cảm biến." });
+    }
 };
 
 // Lấy dữ liệu cảm biến 
-exports.getSensorData = (req, res) => {
-    // Lấy số lượng bản ghi từ query parameter, nếu không có thì mặc định là 10
-    const limit = parseInt(req.query.limit) || 10;
-
-    // Truy vấn cơ sở dữ liệu
-    const query = "SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT ?";
-    db.query(query, [limit], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy dữ liệu cảm biến:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy dữ liệu cảm biến." });
-        }
-
-        // Trả kết quả
-        res.json(results);
-    });
+exports.getSensorData = async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const data = await deviceService.getSensorData(limit);
+        res.json(data);
+    } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu cảm biến:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy dữ liệu cảm biến." });
+    }
 };
 
 
 // Lấy danh sách thiết bị theo phòng
-exports.getDevicesByRoom = (req, res) => {
-    const roomID = req.params.roomID;
-
-    const query = "SELECT * FROM devices WHERE roomID = ?";
-    db.query(query, [roomID], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy thiết bị trong phòng:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách thiết bị." });
-        }
-
-        res.json(results);
-    });
+exports.getDevicesByRoom = async (req, res) => {
+    try {
+        const roomID = req.params.roomID;
+        const devices = await deviceService.getDevicesByRoom(roomID);
+        res.json(devices);
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy danh sách thiết bị." });
+    }
 };
 
 // Lấy nhiệt độ và độ ẩm mới nhất
-exports.getLatestTemperatureAndHumidity = (req, res) => {
-    const query = "SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 1";
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy dữ liệu cảm biến:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy dữ liệu nhiệt độ và độ ẩm." });
-        }
-
-        if (results.length === 0) {
+exports.getLatestTemperatureAndHumidity = async (req, res) => {
+    try {
+        const data = await deviceService.getLatestTemperatureAndHumidity();
+        if (data.length === 0) {
             return res.status(404).json({ error: "Không có dữ liệu nhiệt độ và độ ẩm." });
         }
-
-        res.json(results[0]);
-    });
+        res.json(data[0]);
+    } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu cảm biến mới nhất:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy dữ liệu nhiệt độ và độ ẩm." });
+    }
 };
 
 /// Xóa thiết bị
-exports.deleteDevice = (req, res) => {
-    const deviceID = req.params.deviceID;
+exports.deleteDevice = async (req, res) => {
+    try {
+        const deviceID = req.params.deviceID;
 
-    const getRoomIDQuery = "SELECT roomID FROM devices WHERE id = ?";
-    db.query(getRoomIDQuery, [deviceID], (err, results) => {
-        if (err) {
-            console.error("Lỗi khi lấy roomID:", err);
-            return res.status(500).json({ error: "Lỗi hệ thống khi lấy roomID." });
-        }
-
-        if (results.length === 0) {
+        const devices = await deviceService.checkDeviceExists(deviceID);
+        if (devices.length === 0) {
             return res.status(404).json({ error: "Thiết bị không tồn tại." });
         }
 
-        const roomID = results[0].roomID;
+        const roomID = devices[0].roomID;
 
-        // Xóa thiết bị
-        const deleteDeviceQuery = "DELETE FROM devices WHERE id = ?";
-        db.query(deleteDeviceQuery, [deviceID], (deleteErr) => {
-            if (deleteErr) {
-                console.error("Lỗi khi xóa thiết bị:", deleteErr);
-                return res.status(500).json({ error: "Lỗi hệ thống khi xóa thiết bị." });
-            }
+        await deviceService.deleteDevice(deviceID);
+        await deviceService.updateRoomDeviceCount(roomID, -1);
 
-            // Cập nhật số lượng thiết bị trong phòng
-            const updateRoomQuery = `
-                UPDATE rooms
-                SET numberDevices = GREATEST(numberDevices - 1, 0)
-                WHERE id = ?`;
-            db.query(updateRoomQuery, [roomID], (updateErr) => {
-                if (updateErr) {
-                    console.error("Lỗi khi cập nhật số lượng thiết bị:", updateErr);
-                    return res.status(500).json({ error: "Lỗi khi cập nhật số lượng thiết bị." });
-                }
-
-                res.json({ message: "Thiết bị đã được xóa thành công." });
-            });
-        });
-    });
+        res.json({ message: "Thiết bị đã được xóa thành công." });
+    } catch (error) {
+        console.error("Lỗi khi xóa thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi xóa thiết bị." });
+    }
 };
