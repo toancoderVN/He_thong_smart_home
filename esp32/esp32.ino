@@ -1,25 +1,30 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <HTTPClient.h>
 #include <DHT.h>
+#include <HTTPClient.h>
 
 // Cấu hình WiFi
-const char* ssid = "VIETTEL_BBjH";
-const char* password = "6V8eQZ6w";
+const char* ssid = "DUSTEE";
+const char* password = "12345678";
 
 // Cấu hình DHT11
-#define DHTPIN 26       // GPIO nối với DHT11
+#define DHTPIN 26  // GPIO nối với DHT11
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
 // Cấu hình GPIO thiết bị
-#define LIGHT1_PIN 13   // Đèn 1
-#define FAN1_PIN 27     // Quạt 1
-#define LIGHT2_PIN 14   // Đèn 2
-#define FAN2_PIN 12     // Quạt 2
+#define LIGHT1_PIN 13  // Đèn 1
+#define FAN1_PIN 27    // Quạt 1
+#define LIGHT2_PIN 14  // Đèn 2
+#define FAN2_PIN 12    // Quạt 2
+
+bool light1Status = false;  // Trạng thái Light 1
+bool fan1Status = false;    // Trạng thái Fan 1
+bool light2Status = false;  // Trạng thái Light 2
+bool fan2Status = false;    // Trạng thái Fan 2
 
 // URL backend để gửi dữ liệu cảm biến
-const char* serverName = "http://192.168.101.17:5000/api/devices/add-sensor-data";
+const char* serverName = "http://192.168.137.1:5000/api/devices/add-sensor-data";
 
 // Tạo HTTP Server
 AsyncWebServer server(80);
@@ -32,7 +37,7 @@ void sendSensorData(float temperature, float humidity) {
 
     if (WiFi.status() == WL_CONNECTED) {
         HTTPClient http;
-        http.begin(serverName);
+        http.begin(serverName); // Kết nối tới URL backend
 
         // Thêm header cho JSON
         http.addHeader("Content-Type", "application/json");
@@ -40,19 +45,18 @@ void sendSensorData(float temperature, float humidity) {
         // Tạo dữ liệu JSON
         String jsonData = "{\"temperature\":" + String(temperature) +
                           ",\"humidity\":" + String(humidity) + "}";
+
+        // Gửi dữ liệu qua HTTP POST
         int httpResponseCode = http.POST(jsonData);
 
-    if (httpResponseCode > 0) {
-        String response = http.getString();
-        Serial.println("Phản hồi từ server: " + response);
-        if (response.indexOf("error") != -1) { // Kiểm tra phản hồi lỗi từ backend
-            Serial.println("Có lỗi từ backend: " + response);
+        if (httpResponseCode > 0) {
+            String response = http.getString();
+            Serial.println("Phản hồi từ server: " + response);
+        } else {
+            Serial.println("Không gửi được dữ liệu! Mã lỗi: " + String(httpResponseCode));
         }
-    } else {
-        Serial.println("Không gửi được dữ liệu! Mã lỗi: " + String(httpResponseCode));
-    }
 
-        http.end();
+        http.end(); // Kết thúc HTTP request
     } else {
         Serial.println("WiFi không kết nối!");
     }
@@ -60,115 +64,180 @@ void sendSensorData(float temperature, float humidity) {
 
 
 void setup() {
-    // Khởi động Serial Monitor
-    Serial.begin(115200);
+  Serial.begin(115200);
 
-    // Cấu hình các chân GPIO làm đầu ra
-    pinMode(LIGHT1_PIN, OUTPUT);
-    pinMode(FAN1_PIN, OUTPUT);
-    pinMode(LIGHT2_PIN, OUTPUT);
-    pinMode(FAN2_PIN, OUTPUT);
+  // Cấu hình GPIO làm đầu ra
+  pinMode(LIGHT1_PIN, OUTPUT);
+  pinMode(FAN1_PIN, OUTPUT);
+  pinMode(LIGHT2_PIN, OUTPUT);
+  pinMode(FAN2_PIN, OUTPUT);
 
-    // Mặc định tắt tất cả thiết bị
-    digitalWrite(LIGHT1_PIN, LOW);
-    digitalWrite(FAN1_PIN, LOW);
-    digitalWrite(LIGHT2_PIN, LOW);
-    digitalWrite(FAN2_PIN, LOW);
+  digitalWrite(LIGHT1_PIN, LOW);
+  digitalWrite(FAN1_PIN, LOW);
+  digitalWrite(LIGHT2_PIN, LOW);
+  digitalWrite(FAN2_PIN, LOW);
 
-    // Khởi động DHT
-    dht.begin();
+  dht.begin();
 
-    // Kết nối WiFi
-    WiFi.begin(ssid, password);
-    Serial.print("Đang kết nối WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
+  WiFi.begin(ssid, password);
+  Serial.print("Đang kết nối WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi đã kết nối!");
+  Serial.println("Địa chỉ IP: " + WiFi.localIP().toString());
+
+  // API bật/tắt thiết bị
+  server.on("/control", HTTP_GET, [](AsyncWebServerRequest* request) {
+    if (!request->hasParam("deviceID") || !request->hasParam("action")) {
+      request->send(400, "text/plain", "Thiếu tham số 'deviceID' hoặc 'action'!");
+      return;
     }
-    Serial.println("\nWiFi đã kết nối!");
-    Serial.println("Địa chỉ IP: " + WiFi.localIP().toString());
 
-    // *** Thêm API điều khiển thiết bị ***
-    server.on("/control", HTTP_GET, [](AsyncWebServerRequest *request) {
-        if (!request->hasParam("deviceID") || !request->hasParam("action")) {
-            request->send(400, "text/plain", "Thiếu tham số 'deviceID' hoặc 'action'!");
-            return;
-        }
+    String deviceID = request->getParam("deviceID")->value();
+    String action = request->getParam("action")->value();
 
-        String deviceID = request->getParam("deviceID")->value();
-        String action = request->getParam("action")->value();
+    int gpio = -1;
+    bool* deviceStatus = nullptr;
 
-        int gpio;
-        if (deviceID == "1") gpio = LIGHT1_PIN;
-        else if (deviceID == "2") gpio = FAN1_PIN;
-        else if (deviceID == "3") gpio = LIGHT2_PIN;
-        else if (deviceID == "4") gpio = FAN2_PIN;
-        else {
-            request->send(400, "text/plain", "Thiết bị không hợp lệ!");
-            return;
-        }
+    if (deviceID == "1") {
+      gpio = LIGHT1_PIN;
+      deviceStatus = &light1Status;
+    } else if (deviceID == "2") {
+      gpio = FAN1_PIN;
+      deviceStatus = &fan1Status;
+    } else if (deviceID == "3") {
+      gpio = LIGHT2_PIN;
+      deviceStatus = &light2Status;
+    } else if (deviceID == "4") {
+      gpio = FAN2_PIN;
+      deviceStatus = &fan2Status;
+    } else {
+      request->send(400, "text/plain", "Thiết bị không hợp lệ!");
+      return;
+    }
 
-        if (action == "on") {
-            digitalWrite(gpio, HIGH);
-            Serial.println("Đã bật thiết bị " + deviceID);
-            request->send(200, "text/plain", "Thiết bị " + deviceID + " đã bật!");
-        } else if (action == "off") {
-            digitalWrite(gpio, LOW);
-            Serial.println("Đã tắt thiết bị " + deviceID);
-            request->send(200, "text/plain", "Thiết bị " + deviceID + " đã tắt!");
-        } else {
-            request->send(400, "text/plain", "Tham số 'action' không hợp lệ!");
-        }
-    });
+    if (action == "on") {
+      digitalWrite(gpio, HIGH);
+      *deviceStatus = true;
+    } else if (action == "off") {
+      digitalWrite(gpio, LOW);
+      *deviceStatus = false;
+    } else {
+      request->send(400, "text/plain", "Tham số 'action' không hợp lệ!");
+      return;
+    }
 
-    // API lấy dữ liệu cảm biến DHT11
-    server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request) {
-        float temperature = dht.readTemperature();
-        float humidity = dht.readHumidity();
+    request->send(200, "text/plain", "Thiết bị " + deviceID + " đã " + action + "!");
+  });
 
-        if (isnan(temperature) || isnan(humidity)) {
-            request->send(500, "text/plain", "Lỗi đọc cảm biến!");
-        } else {
-            String data = "Temperature: " + String(temperature) + "°C, Humidity: " + String(humidity) + "%";
-            request->send(200, "text/plain", data);
-        }
-    });
+  // API lấy trạng thái và dữ liệu cảm biến
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+    float temperature = dht.readTemperature();
+    float humidity = dht.readHumidity();
 
-    // Khởi động server
-    server.begin();
+    if (isnan(temperature) || isnan(humidity)) {
+      temperature = 0.0;
+      humidity = 0.0;
+    }
+
+    String html = R"rawliteral(
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>ESP32 Status</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background: #f4f4f9; color: #333; }
+          h1 { color: #4CAF50; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+          .status, .devices { margin-bottom: 20px; }
+          .device { margin: 10px 0; }
+          .button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+          .on { background-color: #4CAF50; color: white; }
+          .off { background-color: #f44336; color: white; }
+        </style>
+        <script>
+          function toggleDevice(deviceID, action) {
+            fetch(`/control?deviceID=${deviceID}&action=${action}`)
+              .then(response => response.text())
+              .then(data => {
+                console.log(data); // Ghi log cho kiểm tra, không hiển thị popup
+                // alert(data);
+                location.reload();
+              })
+              .catch(error => console.error('Error:', error));
+          }
+        </script>
+      </head>
+      <body>
+        <div class="container">
+          <h1>ESP32 Monitoring and Control</h1>
+          <div class="status">
+            <h2>Sensor Data</h2>
+            <p>Temperature: <strong>)rawliteral" + String(temperature) + R"rawliteral(&deg;C</strong></p>
+            <p>Humidity: <strong>)rawliteral" + String(humidity) + R"rawliteral(%</strong></p>
+          </div>
+          <div class="devices">
+            <h2>Devices</h2>
+            <div class="device">
+              <p>Light 1 - Status: <strong>)rawliteral" + String(light1Status ? "ON" : "OFF") + R"rawliteral(</strong></p>
+              <button class="button on" onclick="toggleDevice(1, 'on')">Turn On</button>
+              <button class="button off" onclick="toggleDevice(1, 'off')">Turn Off</button>
+            </div>
+            <div class="device">
+              <p>Fan 1 - Status: <strong>)rawliteral" + String(fan1Status ? "ON" : "OFF") + R"rawliteral(</strong></p>
+              <button class="button on" onclick="toggleDevice(2, 'on')">Turn On</button>
+              <button class="button off" onclick="toggleDevice(2, 'off')">Turn Off</button>
+            </div>
+            <div class="device">
+              <p>Light 2 - Status: <strong>)rawliteral" + String(light2Status ? "ON" : "OFF") + R"rawliteral(</strong></p>
+              <button class="button on" onclick="toggleDevice(3, 'on')">Turn On</button>
+              <button class="button off" onclick="toggleDevice(3, 'off')">Turn Off</button>
+            </div>
+            <div class="device">
+              <p>Fan 2 - Status: <strong>)rawliteral" + String(fan2Status ? "ON" : "OFF") + R"rawliteral(</strong></p>
+              <button class="button on" onclick="toggleDevice(4, 'on')">Turn On</button>
+              <button class="button off" onclick="toggleDevice(4, 'off')">Turn Off</button>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    )rawliteral";
+
+    request->send(200, "text/html", html);
+  });
+
+  server.begin();
 }
 
-
 void loop() {
-    // Gửi dữ liệu cảm biến lên backend mỗi 10 giây
     static unsigned long lastSendTime = 0;
-    if (millis() - lastSendTime > 10000) {
+
+    // Gửi dữ liệu cảm biến mỗi 10 giây
+    if (millis() - lastSendTime > 60000) {
         lastSendTime = millis();
         float temperature = dht.readTemperature();
         float humidity = dht.readHumidity();
 
         if (!isnan(temperature) && !isnan(humidity)) {
             Serial.println("Đang gửi dữ liệu cảm biến...");
-            sendSensorData(temperature, humidity);
+            sendSensorData(temperature, humidity); // Gửi dữ liệu đến server
         } else {
             Serial.println("Không đọc được dữ liệu từ DHT11!");
         }
     }
 
-    // Kiểm tra trạng thái WiFi và kết nối lại nếu mất kết nối
+    // Kiểm tra và khôi phục WiFi nếu mất kết nối
     if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Mất kết nối WiFi. Đang cố gắng kết nối lại...");
-    WiFi.begin(ssid, password);
-    unsigned long wifiReconnectStart = millis();
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-        if (millis() - wifiReconnectStart > 15000) { // 15 giây không kết nối lại được
-            Serial.println("\nKhông kết nối lại được WiFi. Đang khởi động lại ESP...");
-            ESP.restart(); // Khởi động lại ESP32
+        WiFi.begin(ssid, password);
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
         }
+        Serial.println("\nWiFi đã kết nối lại!");
     }
-    Serial.println("\nWiFi đã kết nối lại!");
 }
 
-}

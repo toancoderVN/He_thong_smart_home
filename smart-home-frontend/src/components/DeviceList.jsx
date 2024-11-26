@@ -43,7 +43,7 @@ const DeviceList = ({ roomID }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       )
       .then((response) => {
-        alert(response.data.message);
+        //alert(response.data.message);
         setDevices((prevDevices) =>
           prevDevices.map((device) =>
             device.id === deviceID
