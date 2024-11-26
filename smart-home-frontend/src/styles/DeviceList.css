@@ -1,0 +1,95 @@
+.device-list {
+  display: flex; /* Chuyển sang dạng hàng ngang */
+  flex-wrap: wrap; /* Tự động xuống hàng nếu không đủ chỗ */
+  gap: 20px; /* Khoảng cách giữa các thiết bị */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.device-item {
+  flex: 1 1 calc(50% - 20px); /* Đặt mỗi thiết bị chiếm 50% chiều rộng, trừ đi khoảng cách */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.device-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.device-info {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.device-name {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.device-status {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.device-status.active {
+  background-color: #28a745;
+}
+
+.device-status.inactive {
+  background-color: #dc3545;
+}
+
+.device-buttons {
+  display: flex;
+  gap: 10px; /* Khoảng cách giữa các nút */
+}
+
+.device-button {
+  padding: 10px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.device-button.on {
+  background-color: #28a745;
+  color: white;
+}
+
+.device-button.on:hover {
+  background-color: #218838;
+}
+
+.device-button.off {
+  background-color: #dc3545;
+  color: white;
+}
+
+.device-button.off:hover {
+  background-color: #c82333;
+}
+
+.device-button.delete {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.device-button.delete:hover {
+  background-color: #e0a800;
+}

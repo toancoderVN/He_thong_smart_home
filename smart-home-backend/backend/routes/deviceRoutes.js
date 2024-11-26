@@ -7,6 +7,7 @@ const {
     getSensorData,
     addDevice,
     deleteDevice,
+    getAllDeviceLogs,
 } = require("../controllers/DeviceController");
 const { checkRole } = require("../middlewares/authMiddleware");
 const router = express.Router();
@@ -17,6 +18,10 @@ router.post("/control", checkRole("user"), controlDevice);
 
 // Định nghĩa route thêm thiết bị
 router.post("/add-device", checkRole("user"), addDevice);
+
+// Route lấy lịch sử điều khiển của tất cả thiết bị
+router.get("/logs/all", checkRole("user"), getAllDeviceLogs);
+
 
 // Route lấy lịch sử điều khiển thiết bị
 router.get("/:deviceID/logs", checkRole("user"), getDeviceLogs);

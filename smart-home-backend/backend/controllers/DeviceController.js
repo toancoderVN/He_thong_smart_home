@@ -63,7 +63,7 @@ exports.addDevice = async (req, res) => {
 
 
 
-// Lấy lịch sử điều khiển thiết bị
+// Lấy lịch sử của từng điều khiển thiết bị
 exports.getDeviceLogs = async (req, res) => {
     try {
         const deviceID = req.params.deviceID;
@@ -173,5 +173,16 @@ exports.deleteDevice = async (req, res) => {
     } catch (error) {
         console.error("Lỗi khi xóa thiết bị:", error.message);
         res.status(500).json({ error: "Lỗi hệ thống khi xóa thiết bị." });
+    }
+};
+
+// Lấy lịch sử điều khiển của tất cả thiết bị
+exports.getAllDeviceLogs = async (req, res) => {
+    try {
+        const logs = await deviceService.getAllDeviceLogs(); // Gọi service để lấy dữ liệu
+        res.json(logs); // Trả về JSON
+    } catch (error) {
+        console.error("Lỗi khi lấy lịch sử của tất cả thiết bị:", error.message);
+        res.status(500).json({ error: "Lỗi hệ thống khi lấy lịch sử của tất cả thiết bị." });
     }
 };

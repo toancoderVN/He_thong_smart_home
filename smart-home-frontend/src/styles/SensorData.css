@@ -1,0 +1,53 @@
+.sensor-data-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.sensor-data-tables {
+  display: flex;
+  gap: 20px;
+  justify-content: center; /* Căn giữa hai bảng */
+}
+
+.table-container {
+  flex: 1;
+  text-align: center;
+  max-width: 600px; /* Đặt chiều rộng tối đa */
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  table-layout: fixed; /* Cố định chiều rộng các cột */
+}
+
+.data-table th, .data-table td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+  word-wrap: break-word; /* Bọc từ nếu nội dung quá dài */
+}
+
+.data-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+/* Đồng bộ chiều cao của các hàng */
+.data-table td {
+  height: 40px;
+}
+
+/* Tiêu đề bảng */
+.table-container h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Màu nền bảng */
+.data-table {
+  background-color: #ffffff;
+}
+

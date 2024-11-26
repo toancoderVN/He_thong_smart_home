@@ -1,87 +1,129 @@
-/* Đặt toàn bộ trang nền xanh gradient */
+/* Đảm bảo trang được căn giữa cả trên màn hình lớn và nhỏ */
 body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #d1eaff, #89cff0);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Arial", sans-serif;
+  background: #89cff0; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px; /* Thêm không gian xung quanh */
+  box-sizing: border-box;
+}
+
+/* Khung đăng nhập */
+.login-container {
+  background-color: white; /* Đảm bảo nền trắng */
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Giảm độ mờ */
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 1s ease-out; /* Hiệu ứng fade-in */
+  z-index: 2; /* Ưu tiên khung đăng nhập */
+}
+
+/* Logo */
+.logo {
+  width: 120px; /* Logo lớn hơn */
+  margin-bottom: 25px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s; /* Hiệu ứng hover trên logo */
+}
+
+.logo:hover {
+  transform: scale(1.1); /* Phóng to nhẹ khi hover */
+}
+
+/* Header chào mừng */
+.login-header {
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.login-header h1 {
+  font-size: 24px; /* Chữ lớn hơn */
+  font-weight: bold;
+  margin: 0;
+}
+
+.login-header p {
+  font-size: 16px; /* Phần mô tả nhỏ gọn */
+  color: #555;
+  margin: 5px 0 0;
+}
+
+/* Form đăng nhập */
+.login-container input {
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 15px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: all 0.3s;
+}
+
+.login-container input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+/* Nút đăng nhập */
+.login-container button {
+  width: 100%;
+  padding: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* Hiệu ứng bóng */
+}
+
+.login-container button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px); /* Hiệu ứng nổi */
+  box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+}
+
+/* Footer */
+.footer {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Hiệu ứng fade-in */
+@keyframes fadeIn {
+  from {
+      opacity: 0;
+      transform: translateY(-20px);
   }
-  
-  /* Khung đăng nhập */
-  .login-container {
-    background-color: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+  to {
+      opacity: 1;
+      transform: translateY(0);
   }
-  
-  /* Logo */
-  .logo {
-    width: 100px;
-    margin-bottom: 20px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Header chào mừng */
-  .login-header {
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .login-header h1 {
-    font-size: 22px;
-    font-weight: bold;
-    margin: 0;
-  }
-  
-  .login-header p {
-    font-size: 14px;
-    color: #555;
-    margin: 5px 0 0;
-  }
-  
-  /* Form đăng nhập */
-  .login-container input {
-    width: 100%;
-    margin-bottom: 15px;
-    padding: 12px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-  }
-  
-  .login-container button {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: bold;
-    color: white;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .login-container button:hover {
-    background-color: #0056b3;
-  }
-  
-  /* Hiệu ứng khi focus vào input */
-  .login-container input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-  
+}
+
+.footer {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+  opacity: 0.8;
+}
+.footer p:hover {
+  color: #0056b3; /* Màu nổi bật khi hover */
+}

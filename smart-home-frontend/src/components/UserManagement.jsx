@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import api from "../services/api";
+import "./../styles/UserManagement.css"; // Import CSS đã thiết kế
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -17,10 +17,16 @@ const UserManagement = () => {
             return;
         }
 
-        api.get("/users", {
+        fetch("http://localhost:5000/api/users", {
             headers: { Authorization: `Bearer ${token}` },
         })
-            .then((response) => setUsers(response.data))
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Không thể lấy danh sách người dùng.");
+                }
+                return response.json();
+            })
+            .then((data) => setUsers(data))
             .catch((error) => console.error("Lỗi khi lấy danh sách người dùng:", error));
     };
 
@@ -32,10 +38,18 @@ const UserManagement = () => {
             return;
         }
 
-        api.post("/users/register", newUser, {
-            headers: { Authorization: `Bearer ${token}` },
+        fetch("http://localhost:5000/api/users/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(newUser),
         })
-            .then(() => {
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Không thể thêm người dùng.");
+                }
                 alert("Thêm người dùng thành công!");
                 fetchUsers();
                 setNewUser({ username: "", password: "", role: "user" });
@@ -55,10 +69,14 @@ const UserManagement = () => {
         }
 
         if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-            api.delete(`/users/${userId}`, {
+            fetch(`http://localhost:5000/api/users/${userId}`, {
+                method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             })
-                .then(() => {
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error("Không thể xóa người dùng.");
+                    }
                     alert("Xóa người dùng thành công!");
                     fetchUsers();
                 })
@@ -70,9 +88,9 @@ const UserManagement = () => {
     };
 
     return (
-        <div>
-            <h1>Quản lý người dùng</h1>
-            <table border="1" style={{ width: "100%", textAlign: "center" }}>
+        <div className="user-management-container">
+            <h1 className="user-management-title">Quản lý người dùng</h1>
+            <table className="user-table">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -88,15 +106,20 @@ const UserManagement = () => {
                             <td>{user.username}</td>
                             <td>{user.role}</td>
                             <td>
-                                <button onClick={() => handleDeleteUser(user.id)}>Xóa</button>
+                                <button
+                                    className="delete-button"
+                                    onClick={() => handleDeleteUser(user.id)}
+                                >
+                                    Xóa
+                                </button>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </table>
 
-            <h2>Thêm người dùng mới</h2>
-            <div>
+            <h2 className="add-user-title">Thêm người dùng mới</h2>
+            <div className="add-user-form">
                 <input
                     type="text"
                     placeholder="Tên đăng nhập"
@@ -116,7 +139,9 @@ const UserManagement = () => {
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                 </select>
-                <button onClick={handleAddUser}>Thêm người dùng</button>
+                <button className="add-user-button" onClick={handleAddUser}>
+                    Thêm người dùng
+                </button>
             </div>
         </div>
     );

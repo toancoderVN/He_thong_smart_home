@@ -65,6 +65,17 @@ module.exports = {
         });
     },
 
+    getAllDeviceLogs: () => {
+        const query = "SELECT * FROM Data ORDER BY timestamp DESC"; // Truy vấn tất cả dữ liệu
+        return new Promise((resolve, reject) => {
+            db.query(query, (err, results) => {
+                if (err) reject(err); // Trả về lỗi nếu có
+                else resolve(results); // Trả về kết quả
+            });
+        });
+    },
+    
+
     getDeviceLogs: (deviceID) => {
         const query = "SELECT * FROM Data WHERE deviceID = ? ORDER BY timestamp DESC";
         return new Promise((resolve, reject) => {

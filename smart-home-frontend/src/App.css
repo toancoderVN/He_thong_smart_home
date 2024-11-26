@@ -1,7 +1,15 @@
+/* Định dạng tổng thể */
 .App {
   text-align: center;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5; /* Màu nền nhẹ */
+  color: #333; /* Màu chữ */
+  min-height: 100vh; /* Đảm bảo chiều cao tối thiểu */
+  display: flex;
+  flex-direction: column;
 }
 
+/* Logo App */
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -13,21 +21,6 @@
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -35,4 +28,105 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Header của App */
+.App-header {
+  background-color: #007bff; /* Màu nền xanh dương */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+  padding: 20px;
+}
+
+/* Link của App */
+.App-link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 10px 15px;
+  background-color: #61dafb;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.App-link:hover {
+  background-color: #4da8d6;
+}
+
+/* Thanh điều hướng */
+.navigation-bar {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  position: sticky; /* Cố định khi cuộn */
+  top: 0;
+  z-index: 1000;
+}
+
+.navigation-bar a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 10px 15px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.navigation-bar a:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+/* Hiển thị cảm biến */
+.sensor-display {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  color: #333;
+  z-index: 1000;
+}
+
+.sensor-display h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.sensor-display p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.sensor-display span {
+  font-weight: bold;
+  color: #007bff;
+}
+
+/* Hiệu ứng fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sensor-display {
+  animation: fadeIn 0.5s ease-in-out;
 }

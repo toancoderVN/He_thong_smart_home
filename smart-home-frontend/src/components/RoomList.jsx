@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DeviceList from "./DeviceList";
 import AddDeviceForm from "./AddDeviceForm";
-import SensorData from "./SensorData";
 import "./../styles/RoomList.css";
 
 const RoomList = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedRoomID, setSelectedRoomID] = useState(null);
+  const [showAddDeviceForm, setShowAddDeviceForm] = useState(false); // Trạng thái hiển thị form
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,51 +38,64 @@ const RoomList = () => {
       });
   }, [navigate]);
 
-  const refreshDevices = () => {
-    if (selectedRoomID) {
-      fetch(`http://localhost:5000/api/rooms/${selectedRoomID}/devices`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Danh sách thiết bị đã được cập nhật:", data);
-        })
-        .catch((error) =>
-          console.error("Lỗi khi làm mới danh sách thiết bị:", error)
-        );
-    }
+  const toggleRoom = (roomID) => {
+    setSelectedRoomID(selectedRoomID === roomID ? null : roomID);
+    setShowAddDeviceForm(false); // Ẩn form khi chuyển phòng
+  };
+
+  const toggleAddDeviceForm = () => {
+    setShowAddDeviceForm((prev) => !prev); // Đảo trạng thái hiển thị form
   };
 
   return (
     <div className="room-container">
-      <h1>Danh sách phòng</h1>
-      {rooms.length === 0 ? (
-        <p>Không có phòng nào.</p>
+      {!selectedRoomID ? (
+        <>
+          <h1 className="room-title">Danh sách phòng</h1>
+          <div className="room-list">
+            {rooms.map((room) => (
+              <div
+                key={room.id}
+                className="room-card"
+                onClick={() => toggleRoom(room.id)}
+              >
+                <h2>{room.name}</h2>
+                <p>{room.numberDevices} thiết bị</p>
+              </div>
+            ))}
+          </div>
+        </>
       ) : (
-        <div className="room-list">
-          {rooms.map((room) => (
-            <div
-              key={room.id}
-              className={`room-card ${
-                selectedRoomID === room.id ? "selected" : ""
-              }`}
-              onClick={() => setSelectedRoomID(room.id)}
-            >
-              <h2>{room.name}</h2>
-              <p>{room.numberDevices} thiết bị</p>
+        <div className="room-details-container">
+          <h1>{rooms.find((room) => room.id === selectedRoomID)?.name}</h1>
+          <DeviceList roomID={selectedRoomID} />
+          <button
+            className={`add-device-button ${
+              showAddDeviceForm ? "active" : ""
+            }`}
+            onClick={toggleAddDeviceForm}
+          >
+            {showAddDeviceForm ? "Đóng thêm thiết bị" : "Thêm thiết bị mới"}
+          </button>
+          {showAddDeviceForm && (
+            <div className="add-device-form-wrapper">
+              <AddDeviceForm
+                roomID={selectedRoomID}
+                onDeviceAdded={() => {
+                  console.log("Thiết bị mới được thêm");
+                  setShowAddDeviceForm(false); // Ẩn form sau khi thêm
+                }}
+              />
             </div>
-          ))}
+          )}
+          <button
+            className="back-button"
+            onClick={() => setSelectedRoomID(null)}
+          >
+            Quay lại
+          </button>
         </div>
       )}
-      {selectedRoomID && (
-        <>
-          <DeviceList roomID={selectedRoomID} />
-          <AddDeviceForm roomID={selectedRoomID} onDeviceAdded={refreshDevices} />
-        </>
-      )}
-      <SensorData />
     </div>
   );
 };

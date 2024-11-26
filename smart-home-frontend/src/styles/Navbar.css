@@ -1,0 +1,55 @@
+.navbar {
+    position: fixed; /* Cố định vị trí */
+    top: 0;
+    left: 0;
+    width: 100%; /* Chiếm toàn bộ chiều rộng */
+    background-color: #007bff; /* Màu nền */
+    color: white;
+    display: flex; /* Sử dụng flexbox */
+    justify-content: space-between; /* Căn giữa logo và danh sách liên kết */
+    align-items: center; /* Canh giữa theo chiều dọc */
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Hiệu ứng đổ bóng */
+    z-index: 1000; /* Đảm bảo luôn hiển thị trên các thành phần khác */
+  }
+  
+  .navbar-container {
+    width: 100%;
+    max-width: 1490px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar-logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    margin-right: auto; /* Đẩy logo sang trái */
+  }
+  
+  .navbar-menu {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    margin-left: auto; 
+  }
+  
+  .navbar-menu li {
+    display: inline-block;
+  }
+  
+  .navbar-menu a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.3s;
+  }
+  
+  .navbar-menu a:hover {
+    color: #ffc107;
+  }
+  

@@ -51,8 +51,11 @@ const Login = () => {
     <div className="login-container">
       <div className="login-header">
         <img src={logo} alt="Logo" className="logo" />
-        <h1>Chào mừng đến với Hệ thống Quản lý Nhà thông minh</h1>
-        <p>Cùng nhóm phát triển: A, B, C, D, E</p>
+        <h1>Hệ thống Quản lý Nhà thông minh</h1>
+        <div class="footer">
+          <p>&copy; 2024 Nhóm phát triển: A, B, C, D, E</p>
+        </div>
+
       </div>
       <div className="login-form">
         <input
