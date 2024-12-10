@@ -59,8 +59,9 @@ body, html {
   margin: 5px 0 0;
 }
 
+/
 /* Form đăng nhập */
-.login-container input {
+/* .login-container input {
   width: 100%;
   margin-bottom: 20px;
   padding: 15px;
@@ -75,10 +76,10 @@ body, html {
   border-color: #007bff;
   outline: none;
   box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-}
+} */
 
 /* Nút đăng nhập */
-.login-container button {
+/* .login-container button {
   width: 100%;
   padding: 15px;
   font-size: 18px;
@@ -89,14 +90,14 @@ body, html {
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* Hiệu ứng bóng */
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); 
 }
 
 .login-container button:hover {
   background-color: #0056b3;
-  transform: translateY(-2px); /* Hiệu ứng nổi */
+  transform: translateY(-2px); 
   box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
-}
+} */
 
 /* Footer */
 .footer {
