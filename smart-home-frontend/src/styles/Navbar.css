@@ -1,8 +1,4 @@
 .navbar {
-    position: fixed; /* Cố định vị trí */
-    top: 0;
-    left: 0;
-    width: 100%; /* Chiếm toàn bộ chiều rộng */
     background-color: #007bff; /* Màu nền */
     color: white;
     display: flex; /* Sử dụng flexbox */
@@ -11,11 +7,13 @@
     padding: 10px 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Hiệu ứng đổ bóng */
     z-index: 1000; /* Đảm bảo luôn hiển thị trên các thành phần khác */
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .navbar-container {
     width: 100%;
-    max-width: 1490px;
+    /* max-width: 1490px; */
     display: flex;
     justify-content: space-between;
     align-items: center;

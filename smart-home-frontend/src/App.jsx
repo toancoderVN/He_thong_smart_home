@@ -16,6 +16,7 @@ import SensorDisplay from "./components/SensorDisplay";
 import Navbar from "./components/Navbar";
 import { NotificationContainer } from "react-notifications";
 import { StyleProvider } from "@ant-design/cssinjs";
+import DeviceList from "./components/DeviceList";
 
 const App = () => {
 	return (
@@ -25,6 +26,7 @@ const App = () => {
 					<Routes>
 						<Route path="/login" element={<Login />} />
 						<Route path="/rooms" element={<RoomList />} />
+						{/* <Route path="/rooms/:id" element={<DeviceList />} /> */}
 						<Route path="/sensor-data" element={<SensorData />} />
 						<Route path="/users" element={<UserManagement />} />
 						<Route path="/about" element={<About />} />
@@ -44,13 +46,20 @@ const AppLayout = ({ children }) => {
 
 	const isLoginPage = location.pathname === "/login"; // Kiểm tra nếu là trang đăng nhập
 	useEffect(() => {
-		console.log("first");
 		const token = localStorage.getItem("authToken");
 		if (!token) navigate("/login");
 	}, [location.pathname, navigate]);
 
 	return (
-		<div>
+		<div
+			style={{
+				height: "100%",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				flexDirection: "column",
+			}}
+		>
 			{!isLoginPage && <Navbar />} {/* Hiển thị Navbar trừ trang đăng nhập */}
 			{!isLoginPage && <SensorDisplay />}{" "}
 			{/* Hiển thị SensorDisplay trừ trang đăng nhập */}

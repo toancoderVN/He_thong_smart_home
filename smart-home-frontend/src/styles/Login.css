@@ -1,15 +1,15 @@
 /* Đảm bảo trang được căn giữa cả trên màn hình lớn và nhỏ */
 body, html {
-  margin: 0;
+  /* margin: 0;
   padding: 0;
-  height: 100%;
+  height: 100%; */
   font-family: "Arial", sans-serif;
   background: #89cff0; 
-  display: flex;
+  /* display: flex;
   justify-content: center;
-  align-items: center;
-  padding: 20px; /* Thêm không gian xung quanh */
+  align-items: center; */
   box-sizing: border-box;
+  height: 100%;
 }
 
 /* Khung đăng nhập */

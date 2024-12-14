@@ -19,7 +19,15 @@
   padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  /* position: relative; */
 }
+
+/* .device-item > button {
+  position: absolute;
+  top: 0;
+  right: 0;
+} */
 
 .device-item:hover {
   transform: scale(1.05);
@@ -38,7 +46,7 @@
 
 .device-status {
   display: inline-block;
-  margin-left: 10px;
+  /* margin-left: 10px; */
   padding: 5px 10px;
   border-radius: 5px;
   font-size: 14px;

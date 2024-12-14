@@ -14,6 +14,15 @@ const Login = () => {
 		if (window.location.pathname === "/") {
 			navigate("/login");
 		}
+
+		const token = localStorage.getItem("authToken");
+
+		if (token) {
+			// navigate(-1);
+		}
+		console.log("token: ", JSON.parse(atob(token.split(".")[1])));
+		// console.log("lastPage: ", lastPage);
+		// const decodedToken = JSON.parse(atob(token.split(".")[1]));
 	}, [navigate]);
 
 	const handleSubmit = () => {
@@ -59,47 +68,6 @@ const Login = () => {
 	};
 
 	return (
-		// <div className="login-container">
-		// 	<div className="login-header">
-		// 		<img
-		// 			src={logo}
-		// 			alt="Logo"
-		// 			className="logo"
-		// 			style={{ borderRadius: "0px" }}
-		// 		/>
-		// 		<h1>Hệ thống Quản lý Nhà thông minh</h1>
-		// 		<div class="footer">
-		// 			<p>&copy; 2024 Nhóm phát triển: A, B, C, D, E</p>
-		// 		</div>
-		// 	</div>
-		// 	<div className="login-form">
-		// 		<input
-		// 			type="text"
-		// 			placeholder="Tên đăng nhập"
-		// 			value={username}
-		// 			onChange={(e) => setUsername(e.target.value)}
-		// 		/>
-		// 		<input
-		// 			type="password"
-		// 			placeholder="Mật khẩu"
-		// 			value={password}
-		// 			onChange={(e) => setPassword(e.target.value)}
-		// 		/>
-		// 		<button onClick={handleLogin}>Đăng nhập</button>
-		// 		{errorMessage && (
-		// 			<p
-		// 				className="error-message"
-		// 				style={{
-		// 					color: "red",
-		// 					marginTop: "10px",
-		// 					fontSize: "14px",
-		// 				}}
-		// 			>
-		// 				{errorMessage}
-		// 			</p>
-		// 		)}
-		// 	</div>
-		// </div>
 		<div className="login-container">
 			<div className="login-header">
 				<img

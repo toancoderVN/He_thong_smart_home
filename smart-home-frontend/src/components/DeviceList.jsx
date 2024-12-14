@@ -1,9 +1,35 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import "./../styles/DeviceList.css";
+import { Button, Dropdown, Modal, Tag } from "antd";
+import {
+	DeleteOutlined,
+	ExclamationCircleFilled,
+	PoweroffOutlined,
+	SmallDashOutlined,
+	StopOutlined,
+	UserOutlined,
+} from "@ant-design/icons";
+import { NotificationManager } from "react-notifications";
 
 const DeviceList = ({ roomID }) => {
 	const [devices, setDevices] = useState([]);
+
+	const { confirm } = Modal;
+
+	const showConfirm = (id) => {
+		confirm({
+			title: `Bạn có chắc chắn muốn xoá thiệt bị này?`,
+			icon: <ExclamationCircleFilled />,
+			content: "",
+			onOk() {
+				deleteDevice(id);
+			},
+			onCancel() {
+				// console.log("Cancel");
+			},
+		});
+	};
 
 	useEffect(() => {
 		const token = localStorage.getItem("authToken");
@@ -22,7 +48,10 @@ const DeviceList = ({ roomID }) => {
 			.catch((error) => {
 				console.error("Lỗi khi lấy danh sách thiết bị:", error);
 				if (error.response?.status === 401) {
-					alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+					// alert("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+					NotificationManager.error(
+						"Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!"
+					);
 					localStorage.removeItem("authToken");
 					window.location.href = "/login";
 				}
@@ -57,7 +86,8 @@ const DeviceList = ({ roomID }) => {
 				const errorMessage =
 					error.response?.data?.error ||
 					"Không thể điều khiển thiết bị. Vui lòng thử lại!";
-				alert(errorMessage);
+				// alert(errorMessage);
+				NotificationManager.error(errorMessage);
 			});
 	};
 
@@ -68,25 +98,27 @@ const DeviceList = ({ roomID }) => {
 			return;
 		}
 
-		if (window.confirm("Bạn có chắc chắn muốn xóa thiết bị này?")) {
-			api
-				.delete(`/devices/${deviceID}`, {
-					headers: { Authorization: `Bearer ${token}` },
-				})
-				.then((response) => {
-					alert("Thiết bị đã được xóa thành công!");
-					setDevices((prevDevices) =>
-						prevDevices.filter((device) => device.id !== deviceID)
-					);
-				})
-				.catch((error) => {
-					console.error("Lỗi khi xóa thiết bị:", error);
-					const errorMessage =
-						error.response?.data?.error ||
-						"Không thể xóa thiết bị. Vui lòng thử lại!";
-					alert(errorMessage);
-				});
-		}
+		// if (window.confirm("Bạn có chắc chắn muốn xóa thiết bị này?")) {
+		api
+			.delete(`/devices/${deviceID}`, {
+				headers: { Authorization: `Bearer ${token}` },
+			})
+			.then((response) => {
+				// alert("Thiết bị đã được xóa thành công!");
+				NotificationManager.success("Thiết bị đã được xóa thành công!");
+				setDevices((prevDevices) =>
+					prevDevices.filter((device) => device.id !== deviceID)
+				);
+			})
+			.catch((error) => {
+				console.error("Lỗi khi xóa thiết bị:", error);
+				const errorMessage =
+					error.response?.data?.error ||
+					"Không thể xóa thiết bị. Vui lòng thử lại!";
+				// alert(errorMessage);
+				NotificationManager.error(errorMessage);
+			});
+		// }
 	};
 
 	return (
@@ -98,37 +130,59 @@ const DeviceList = ({ roomID }) => {
 				<ul className="device-list">
 					{devices.map((device) => (
 						<li key={device.id} className="device-item">
+							<div
+								style={{
+									width: "100%",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "flex-end",
+								}}
+							>
+								<Dropdown
+									menu={{
+										items: [
+											{
+												label: "Bật",
+												key: "1",
+												icon: <PoweroffOutlined />,
+												onClick: () => controlDevice(device.id, "on"),
+											},
+											{
+												label: "Tắt",
+												key: "2",
+												icon: <StopOutlined />,
+												onClick: () => controlDevice(device.id, "off"),
+											},
+											{
+												label: "Xoá",
+												key: "3",
+												icon: <DeleteOutlined />,
+												danger: true,
+												onClick: () => showConfirm(device.id), //deleteDevice(device.id),
+											},
+										],
+									}}
+									arrow={{
+										pointAtCenter: true,
+									}}
+								>
+									<Button>
+										<SmallDashOutlined />
+									</Button>
+								</Dropdown>
+							</div>
+
 							<div className="device-info">
 								<div className="device-name-status">
 									<span className="device-name">{device.name}</span>
-									<span
-										className={`device-status ${
-											device.status === 1 ? "active" : "inactive"
-										}`}
-									>
-										{device.status === 1 ? "Bật" : "Tắt"}
+									<span className={`device-status`}>
+										{device.status === 1 ? (
+											<Tag color="#87d068">Bật</Tag>
+										) : (
+											<Tag color="#f50">Tắt</Tag>
+										)}
 									</span>
 								</div>
-							</div>
-							<div className="device-buttons">
-								<button
-									className="device-button on"
-									onClick={() => controlDevice(device.id, "on")}
-								>
-									Bật
-								</button>
-								<button
-									className="device-button off"
-									onClick={() => controlDevice(device.id, "off")}
-								>
-									Tắt
-								</button>
-								<button
-									className="device-button delete"
-									onClick={() => deleteDevice(device.id)}
-								>
-									Xóa
-								</button>
 							</div>
 						</li>
 					))}

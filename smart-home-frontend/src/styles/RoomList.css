@@ -1,9 +1,14 @@
 /* Toàn bộ container */
 .room-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  /* max-width: 1200px;
+  margin: 0 auto; */
+  /* padding: 20px; */
   transition: all 0.5s ease;
+  height: calc(100vh - 44px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 /* Tiêu đề danh sách phòng */
